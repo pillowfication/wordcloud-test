@@ -44,11 +44,15 @@ app.get('/wordcloud/:artist', (req, res) => {
 	  artist: req.params.artist
 	}
 
-	}, (err, response) => {
+	}, (err, response, body) => {
 	  if (err)
         return response.status(500).send('ERROR');
 
-      res.send(response);
+      var result = JSON.parse(body)
+      result = _.orderBy(_.keys(result),key => result[key], 'desc')
+      console.log(_.size(result));
+      res.type('json')
+      res.send(result);
 	})
 });
 
@@ -71,25 +75,28 @@ app.get('/api/artistsearch', (req, res) => {
       	qs: {
       		artist_id: artistResults.message.body.artist_list[0].artist.artist_id
       	}
-      }, (err2, response2) => {
+      }, (err2, response2, body2) => {
   	  	if (err2)
   	  		return response2.status(500).send('ERROR');
 
-  	  	res.send(response2)
+  	  	
+  	  	var result = JSON.parse(body2);
+  	  	res.type('json');
+  	  	res.send(result)
   	  })
 
     }
   );
 });
 
-var count = 0;
+
 app.get('/api/albumget', (req, res) => {
 	request.get ({
 		url: 'http://api.musixmatch.com/ws/1.1/artist.albums.get',
 		qs: {
 			apikey: '101ee0383f1dc5b5665ba357d7a00514',
 			artist_id: req.query.artist_id,
-			page_size: 5,
+			page_size: 6,
 			g_album_name: 1
 
 		}
@@ -109,7 +116,7 @@ app.get('/api/albumget', (req, res) => {
 					qs: {
 						apikey: '101ee0383f1dc5b5665ba357d7a00514',
 						album_id: album_ids[x],
-						page_size: 2,
+						page_size: 3,
 						f_has_lyrics: 1
 					}
 
@@ -118,8 +125,6 @@ app.get('/api/albumget', (req, res) => {
 							return response2.status(500).send('ERROR');
 
 						const trackResults = JSON.parse(body2);
-						count++;
-						console.log(count);
 
 						var track_ids = _.map(trackResults.message.body.track_list, 'track.track_id');
 						for (y in track_ids){
@@ -137,14 +142,16 @@ app.get('/api/albumget', (req, res) => {
 									const lyricResults = JSON.parse(body3);
 
 									var lyrics = lyricResults.message.body.lyrics.lyrics_body;
-									var wordArray = lyrics.match(/[^\s]+/g);
+									var wordArray = lyrics.split(/[^a-zA-Z0-9']/);
 									for (i = 0; i < wordArray.length; i++) {
-										word = wordArray[i].toLowerCase()
-										if (myMap.has(word)) {
-											myMap.set(word, myMap.get(word)+1);
-										} 
-										else {
-											myMap.set(word, 1);
+										if (wordArray[i] !== "") {
+											word = wordArray[i].toLowerCase()
+											if (myMap.has(word)) {
+												myMap.set(word, myMap.get(word)+1);
+											} 
+											else {
+												myMap.set(word, 1);
+											}
 										}
 									}
 								}
@@ -153,9 +160,17 @@ app.get('/api/albumget', (req, res) => {
 					}
 				)
 			}
-			setTimeout(function() {console.log("fuck" + myMap.get('for'))}, 500);
-			res.type('json');
-			res.send(JSON.stringify(albumResults));
+			setTimeout(function() {
+				var obj = Object.create(null);
+				for ([k,v] of myMap){
+					var key = k.replace(/\\n/g, "\\n").replace(/\\r/g, "\\r")
+					obj[key] = v;
+				}
+				console.log("fuck" + myMap.get('what'))
+				res.type('json');
+				obj = JSON.stringify(obj);
+				res.send(obj);
+			}, 500);
 		}	
 	)
 });
