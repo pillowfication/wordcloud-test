@@ -1,0 +1,127 @@
+body {
+    background: #d4d7db;
+}
+h1{
+   font-size: 50px;
+   margin: auto;
+   width:50%;
+
+}
+
+.main {
+  margin: auto;
+  width:50%;
+  min-width: 600px;
+}
+
+#searchBar {
+    border-color: #a407ff;
+    font-size: 20px;
+    font: lightgrey;
+    height: 40px;
+    width:85%;
+    border-width: 2px;
+    border-radius: 5px;
+
+}
+
+#searchButton {
+    font-size: 20px;
+    font-style: italic;
+    font-weight: bold;
+    background: #a407ff;
+    border-color:#a407ff;
+    border-radius:5px;
+    width: 100x;
+    height: 41px;
+
+}
+#artist,ul{
+  list-style-type: none;
+  display: none;
+
+}
+
+/*wordcloud css*/
+#mergeButton{
+
+  font-size: 20px;
+  font-style: italic;
+  margin-top: 10px;
+  background: #b55cdb;
+  border-color: #b55cdb;
+  width: 140px;
+  height: 40px;
+}
+#searchBar2 {
+    border-color: purple;
+    font-size: 25px;
+    font: lightgrey;
+    height: 40px;
+    width: 400px;
+    border-width: 2px;
+    magrin:500px 0 50px 0 ;
+}
+
+
+#wordcloudImage{
+   margin-top: 50px;
+   margin-left: 200px;
+
+}
+
+#searchButton2 {
+    font-size: 20px;
+    font-style: italic;
+    margin-top: 10px;
+    background: #b55cdb;
+    border-color: #b55cdb;
+    width: 100px;
+    height: 40px;
+}
+
+#facebookButton{
+  font-size: 20px;
+  font-style: italic;
+  color:white;
+  margin-top: 10px;
+  background: blue;
+  border-color: blue;
+  width: 210px;
+  height: 40px;
+}
+.cloudSearchArea{
+
+  margin-left: 200px;
+}
+#buttonArea {
+ margin-left: 100px;
+}
+
+#theWord{
+  width: 200px;
+  font-size: 40px;
+  margin: 0 0 0 850px;
+}
+
+#songList{
+  width: 200px;
+  font-size: 30px;
+  margin-left: 780px;
+  margin-top: 50px;
+
+}
+#frequencyList{
+  width: 200px;
+  font-size: 30px;
+  margin-left: 1000px;
+  margin-top: -440px;
+}
+#backtoMain{
+  margin-left: -200px;
+  margin-top: 100px;
+  background-color: purple;
+  width: 300px;
+  height: 50px;
+  font-size: 40px;
+}
