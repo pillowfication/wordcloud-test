@@ -33,54 +33,135 @@ app.get('/', function(req,res) {
 	res.render('index')
 })
 
-app.get('styles.css', (req, res) => {
+app.get('/styles.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'styles', 'main.css'));
 });
 
-app.get('/api/artistsearch', (req, res) => {
-  // variables defined in the req object can be accessed with req.query.<variable>
-  // For example, if you make the request
-  // request.get({ url: 'localhost:3000', qs: { foo: 'bar' } });
-  // then req.query.foo is set to 'bar'
-  // (The above request.get() is equivalent to visiting http://localhost:3000?foo=bar in your browser)
+app.get('/wordcloud/:artist', (req, res) => {
+  request.get({
+	url: 'http://localhost:3000/api/artistsearch',
+	qs: {
+	  artist: req.params.artist
+	}
 
-  // make a request to MM for the data
-  // Example: https://github.com/pillowfication/myimagerepostuff/blob/master/bot/commands/kuubot-sauce.js#L74
+	}, (err, response) => {
+	  if (err)
+        return response.status(500).send('ERROR');
+
+      res.send(response);
+	})
+});
+
+app.get('/api/artistsearch', (req, res) => {
   request.get({
     url: 'http://api.musixmatch.com/ws/1.1/artist.search',
     qs: {
       apikey: '101ee0383f1dc5b5665ba357d7a00514',
       q_artist: req.query.artist,
-      page_size: 5
+      page_size: 2
     }
 
     }, (err, response, body) => {
       if (err)
-        return response.status(500).send('ERROR'); // we don't care about proper error codes/statuses (this occurs if requesting failed, or the server responded with an error status)
+        return response.status(500).send('ERROR'); 
 
-      const searchResults = JSON.parse(body); // if you need to sanitize the data do it here. I'm assuming MM returns a JSON object
-      // sometimes no error is returned, but searchResults is still "bad".
-      // for example, we got a good response but authentication failed.
-      // then you will need to check that we got the results we are looking for.
-      // if (!searchResults)
-      //   return response.status(500).send('ERROR');
+      const artistResults = JSON.parse(body); 
+      request.get({
+      	url:'http://localhost:3000/api/albumget',
+      	qs: {
+      		artist_id: artistResults.message.body.artist_list[0].artist.artist_id
+      	}
+      }, (err2, response2) => {
+  	  	if (err2)
+  	  		return response2.status(500).send('ERROR');
 
-      // make it here means we got what we wanted
-      res.type('json');
-      res.send(JSON.stringify(searchResults));
+  	  	res.send(response2)
+  	  })
+
     }
   );
 });
 
-app.get('/api/wordsearch', (req, res) => {
-  // variables defined in the req object can be accessed with req.query.<variable>
-  // For example, if you make the request
-  // request.get({ url: 'localhost:3000', qs: { foo: 'bar' } });
-  // then req.query.foo is set to 'bar'
-  // (The above request.get() is equivalent to visiting http://localhost:3000?foo=bar in your browser)
+var count = 0;
+app.get('/api/albumget', (req, res) => {
+	request.get ({
+		url: 'http://api.musixmatch.com/ws/1.1/artist.albums.get',
+		qs: {
+			apikey: '101ee0383f1dc5b5665ba357d7a00514',
+			artist_id: req.query.artist_id,
+			page_size: 5,
+			g_album_name: 1
 
-  // make a request to MM for the data
-  // Example: https://github.com/pillowfication/myimagerepostuff/blob/master/bot/commands/kuubot-sauce.js#L74
+		}
+
+		}, (err, response, body) => {
+			if (err)
+				return response.status(500).send('ERROR');
+
+			const albumResults = JSON.parse(body);
+
+			var album_ids = _.map(albumResults.message.body.album_list, 'album.album_id');
+
+			var myMap = new Map();
+			for (x in album_ids) {
+				request.get ({
+					url: 'http://api.musixmatch.com/ws/1.1/album.tracks.get',
+					qs: {
+						apikey: '101ee0383f1dc5b5665ba357d7a00514',
+						album_id: album_ids[x],
+						page_size: 2,
+						f_has_lyrics: 1
+					}
+
+					}, (err2, response2, body2) => {
+						if (err2)
+							return response2.status(500).send('ERROR');
+
+						const trackResults = JSON.parse(body2);
+						count++;
+						console.log(count);
+
+						var track_ids = _.map(trackResults.message.body.track_list, 'track.track_id');
+						for (y in track_ids){
+							request.get ( {
+								url: 'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
+								qs: {
+									apikey:'101ee0383f1dc5b5665ba357d7a00514',
+									track_id: track_ids[y],
+								}
+
+								}, (err3, response3, body3) => {
+									if (err3)
+										return response3.status(500).send('ERROR');
+
+									const lyricResults = JSON.parse(body3);
+
+									var lyrics = lyricResults.message.body.lyrics.lyrics_body;
+									var wordArray = lyrics.match(/[^\s]+/g);
+									for (i = 0; i < wordArray.length; i++) {
+										word = wordArray[i].toLowerCase()
+										if (myMap.has(word)) {
+											myMap.set(word, myMap.get(word)+1);
+										} 
+										else {
+											myMap.set(word, 1);
+										}
+									}
+								}
+							)
+						}
+					}
+				)
+			}
+			setTimeout(function() {console.log("fuck" + myMap.get('for'))}, 500);
+			res.type('json');
+			res.send(JSON.stringify(albumResults));
+		}	
+	)
+});
+
+//word
+app.get('/api/wordsearch', (req, res) => {
   request.get({
     url: 'http://api.musixmatch.com/ws/1.1/track.search',
     qs: {
@@ -92,31 +173,18 @@ app.get('/api/wordsearch', (req, res) => {
 
     }, (err, response, body) => {
       if (err)
-        return response.status(500).send('ERROR'); // we don't care about proper error codes/statuses (this occurs if requesting failed, or the server responded with an error status)
+        return response.status(500).send('ERROR'); 
 
-      const searchResults = JSON.parse(body); // if you need to sanitize the data do it here. I'm assuming MM returns a JSON object
-      // sometimes no error is returned, but searchResults is still "bad".
-      // for example, we got a good response but authentication failed.
-      // then you will need to check that we got the results we are looking for.
-      // if (!searchResults)
-      //   return response.status(500).send('ERROR');
-
-      // make it here means we got what we wanted
+      const searchResults = JSON.parse(body);      
       res.type('json');
       res.send(JSON.stringify(searchResults));
     }
   );
 });
 
-app.get('/api/tracksearch', (req, res) => {
-  // variables defined in the req object can be accessed with req.query.<variable>
-  // For example, if you make the request
-  // request.get({ url: 'localhost:3000', qs: { foo: 'bar' } });
-  // then req.query.foo is set to 'bar'
-  // (The above request.get() is equivalent to visiting http://localhost:3000?foo=bar in your browser)
 
-  // make a request to MM for the data
-  // Example: https://github.com/pillowfication/myimagerepostuff/blob/master/bot/commands/kuubot-sauce.js#L74
+//test
+app.get('/api/tracksearch', (req, res) => {
   request.get({
     url: 'http://api.musixmatch.com/ws/1.1/chart.artists.get',
     qs: {
@@ -128,17 +196,9 @@ app.get('/api/tracksearch', (req, res) => {
 
     }, (err, response, body) => {
       if (err)
-        return response.status(500).send('ERROR'); // we don't care about proper error codes/statuses (this occurs if requesting failed, or the server responded with an error status)
+        return response.status(500).send('ERROR'); 
 
-      const searchResults = JSON.parse(body); // if you need to sanitize the data do it here. I'm assuming MM returns a JSON object
-      // sometimes no error is returned, but searchResults is still "bad".
-      // for example, we got a good response but authentication failed.
-      // then you will need to check that we got the results we are looking for.
-      // if (!searchResults)
-      //   return response.status(500).send('ERROR');
-
-      // make it here means we got what we wanted
-
+      const searchResults = JSON.parse(body); 
       var artists = _.map(searchResults.message.body.artist_list, 'artist.artist_name');
       var results = {result: artists};
 
