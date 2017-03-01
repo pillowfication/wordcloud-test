@@ -4,7 +4,7 @@
     <head>
         <meta charset="utf-8">
         <title>WordCloud18</title>
-        <link href="styles/main.css" / rel="stylesheet">
+        <link href="/styles.css" rel="stylesheet">
         <script src="js/scripts.js"></script>
         <script type="text/javascript" src="http://tracking.musixmatch.com/t1.0/AMa6hJCIEzn1v8RuOP"></script>
         <script data-require="jquery" data-semver="2.1.4" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>

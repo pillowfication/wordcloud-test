@@ -30,8 +30,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.all(/.+\.php$/, phpExpress.router);
 
 app.get('/', function(req,res) {
-	res.render('test', {asdf: 'Arthur'})
+	res.render('index')
 })
+
+app.get('styles.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'styles', 'main.css'));
+});
 
 app.get('/api/artistsearch', (req, res) => {
   // variables defined in the req object can be accessed with req.query.<variable>

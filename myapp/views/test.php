@@ -5,7 +5,7 @@
 	</head>
 	<body>
 
-		#{asdf}
+		<?php echo $_GET["asdf"]; ?>
 		
 	</body>
 </html>
