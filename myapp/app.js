@@ -34,7 +34,7 @@ app.get('/', function(req,res) {
 })
 
 app.get('styles.css', (req, res) => {
-  res.sendFile(path.join(__dirname, 'styles', 'main.css'));
+  res.sendFile(path.join(__dirname, 'views', 'styles', 'main.css'));
 });
 
 app.get('/api/artistsearch', (req, res) => {

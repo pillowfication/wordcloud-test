@@ -15,6 +15,11 @@
   },
   "main": "myapp/app.js",
   "dependencies": {
+    "body-parser": "^1.16.1",
+    "express": "^4.14.1",
+    "lodash": "^4.17.4",
+    "php-express": "0.0.3",
+    "request": "^2.79.0",
     "wordcloud": "^1.0.6"
   },
   "license": "MIT"
