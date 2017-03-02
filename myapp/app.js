@@ -53,9 +53,9 @@ app.get('/wordcloud/:artist', (req, res) => {
       result = _.orderBy(_.keys(result),key => result[key], 'desc');
       console.log(_.size(result));
 
-      res.render('wordcloud', { get: {artist_name: artist_name}});
-      //res.type('json');
-      //res.send(result)
+      //res.render('wordcloud', { get: {artist_name: artist_name}});
+      res.type('json');
+      res.send(result)
 	})
 });
 
