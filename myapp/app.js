@@ -38,6 +38,14 @@ app.get('/styles.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'styles', 'main.css'));
 });
 
+app.get('/wordcloud2.js', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'node_modules', 'wordcloud', 'src',  'wordcloud2.js'));
+});
+
+app.get('/wordcloudpage.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'scripts', 'wordcloudpage.js'));
+});
+
 app.get('/wordcloud/:artist', (req, res) => {
   var artist_name = req.params.artist;
   request.get({
@@ -52,10 +60,8 @@ app.get('/wordcloud/:artist', (req, res) => {
 
       var result = JSON.parse(body);
       result = _.orderBy(_.keys(result),key => result[key], 'desc');
-      console.log(_.size(result));
-      var send = {result: result};
 
-      res.render('wordcloud', { get: {artist_name: artist_name}});
+      res.render('wordcloud', { get: {artist_name: artist_name, list: result}});
       //res.type('json');
       //res.send(send)
 	})
