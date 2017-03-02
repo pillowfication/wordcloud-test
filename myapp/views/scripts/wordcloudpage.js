@@ -1,13 +1,37 @@
+
 window.onload = function() {
 	WordCloud(document.getElementById("canvas"), {
-		list: [["Arthur", 30], ["Markus", 20], ["lol", 40], ["ten", 50]],
-		gridSize: 8,
-		weightFactor: 1,
-		fontFamily: "sans-serif",
+		list: window.list,
+		gridSize: Math.round(16 * 2000/1024),
+		weightFactor: function(size) {
+			return Math.pow(size, 2.3) * 2000/1024;
+			},
+		fontFamily: 'Finger Paint, cursive, sans-serif',
 		color: "random-dark",
-		backgroundColor: "#f0f0f0",
 		rotateRatio: 0,
-		gridSize: 30
-	})
-	console.log("hi")
-}
+		hover: window.drawBox,
+		backgroundColor: "#ffe0e0",
+		/**
+		hover: function(item, dimension) {
+			if (!dimension) {
+				document.getElementById('box').setAttribute('hidden', true)
+				return;
+			}
+
+			document.getElementById('box').setAttribute('hidden',false);
+			document.getElementById('box').style.left = dimension.x + 'px';
+			document.getElementById('box').style.top = dimension.y + 'px';
+			document.getElementById('box').style.width = dimension.w + 'px';
+			document.getElementById('box').style.height = dimension.h + 'px';
+			console.log(document.getElementById('box').style)
+		},
+		*/
+		click: function(item) {
+			var list=document.getElementsByTagName('h1')[0]
+				.innerHTML.split(',').map(function(artist){
+					return artist.trim();
+			})[0]
+			window.location.href='/wordsearch/'+item[0]+'/'+list;
+		}
+	});
+};

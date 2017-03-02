@@ -30,6 +30,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 // routing all .php file to php-express
 app.all(/.+\.php$/, phpExpress.router);
 
+var stopWords= ['a','about','am','an','and','any','are','arent',
+			'as','at','be','been','both','but','by','cant','cannot','could','couldnt',
+			'did','didnt','do','does','doesnt','doing','dont','each','few','for','from',
+			'had','hadnt','has','hasnt','havent','having','hed','hes','here','heres','hers',
+			'herself','himself','how','hows','i','id','ill','im','ive','if','in','is','isnt',
+			'it','its','itself','lets','more','most','mustnt','my','myself','nor','of','on',
+			'or','ought','shant','shed','shouldnt','so','some','such','than','that','thats',
+			'the','their','theirs','them','themselves','then','there','theres','these','theyd',
+			'theyll','theyre','theyve','this','through','to','too','up','was','wasnt','wed',
+			'well','weve','werent','what','whats','whens','wheres','which','while','who',
+			'whos','whom','whys','with','yourself','yourselves']
+
+var songMap = new Map();
+var cache = new Map();
+
 app.get('/', function(req,res) {
 	res.render('index')
 })
@@ -37,6 +52,11 @@ app.get('/', function(req,res) {
 app.get('/styles.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'styles', 'main.css'));
 });
+
+app.get('/lyrics.css', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'styles', 'lyrics.css'));
+});
+
 
 app.get('/wordcloud2.js', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'node_modules', 'wordcloud', 'src',  'wordcloud2.js'));
@@ -48,24 +68,163 @@ app.get('/wordcloudpage.js', (req, res) => {
 
 app.get('/wordcloud/:artist', (req, res) => {
   var artist_name = req.params.artist;
-  request.get({
-	url: 'http://localhost:3000/api/artistsearch',
-	qs: {
-	  artist: artist_name
+  if (cache.has(artist_name)){
+  	var words = cache.get(artist_name);
+  	words = words.join();
+  	res.render('wordcloud', {get: {artist1: artist_name, artist2: "", list: words}});
+  }
+  else {
+	  request.get({
+		url: 'http://localhost:3000/api/artistsearch',
+		qs: {
+		  artist: artist_name
+		}
+
+		}, (err, response, body) => {
+		  if (err)
+	        return response.status(500).send('ERROR');
+
+	      var result = JSON.parse(body);
+	      result = _.orderBy(_.keys(result),key => result[key], 'desc');
+	      if (result.size > 250) {
+	      	result = result.slice(0,250);
+	      }
+	      cache.set(artist_name, result);
+
+	      result = result.join();
+
+	      res.render('wordcloud', { get: {artist1: artist_name, artist2: "", list: result}});
+	      //res.type('json');
+	      //res.send(result)
+		})
 	}
-
-	}, (err, response, body) => {
-	  if (err)
-        return response.status(500).send('ERROR');
-
-      var result = JSON.parse(body);
-      result = _.orderBy(_.keys(result),key => result[key], 'desc');
-
-      res.render('wordcloud', { get: {artist_name: artist_name, list: result}});
-      //res.type('json');
-      //res.send(send)
-	})
 });
+
+app.get('/merge/:artist/:artist2', (req, res) => {
+	var artist1 = req.params.artist;
+	var artist2 = req.params.artist2;
+	if (cache.has(artist1) && cache.has(artist2)) {
+		console.log('nice');
+		var words1 = cache.get(artist1);
+		var words2 = cache.get(artist2);
+		words = _.union(words2, words1);
+		words = words.join();
+		if (words.size > 250) {
+		  	words = words.slice(0,250);
+		}
+
+		res.render('wordcloud', {get: {artist1: artist1, artist2: artist2, list: words}})
+	}
+	else if (cache.has(artist1) && !cache.has(artist2)) {
+		console.log('not nice');
+		var words1 = cache.get(artist1);
+		request.get({
+		url: 'http://localhost:3000/api/artistsearch',
+		qs: {
+		  artist: artist2
+		}
+
+		}, (err, response, body) => {
+		  if (err)
+	        return response.status(500).send('ERROR');
+
+	      var result = JSON.parse(body);
+	      result = _.orderBy(_.keys(result),key => result[key], 'desc');
+	      if (result.size > 250) {
+	      	result = result.slice(0,250);
+	      }
+	      cache.set(artist2, result);
+
+	      words = _.union(result, words1);
+	      if (words.size > 250) {
+		  	words = words.slice(0,250);
+		  }
+		  words = words.join();
+
+	      res.render('wordcloud', { get: {artist1: artist1, artist2: artist2, list: words}});
+	      //res.type('json');
+	      //res.send(result)
+		})
+	}
+	else if (cache.has(artist2) && !cache.has(artist1)) {
+		var words2 = cache.get(artist2);
+		request.get({
+		url: 'http://localhost:3000/api/artistsearch',
+		qs: {
+		  artist: artist1
+		}
+
+		}, (err, response, body) => {
+		  if (err)
+	        return response.status(500).send('ERROR');
+
+	      var result = JSON.parse(body);
+	      result = _.orderBy(_.keys(result),key => result[key], 'desc');
+	      if (result.size > 250) {
+	      	result = result.slice(0,250);
+	      }
+	      cache.set(artist1, result);
+
+	      words = _.union(result, words2);
+	      if (words.size > 250) {
+		  	words = words.slice(0,250);
+		  }
+		  words = words.join();
+
+	      res.render('wordcloud', { get: {artist1: artist1, artist2: artist2, list: words}});
+	      //res.type('json');
+	      //res.send(result)
+		})
+	}
+	else {
+		request.get({
+		url: 'http://localhost:3000/api/artistsearch',
+		qs: {
+		  artist: artist1
+		}
+
+		}, (err, response, body) => {
+		  if (err)
+	        return response.status(500).send('ERROR');
+
+	      var result1 = JSON.parse(body);
+	      result1 = _.orderBy(_.keys(result1),key => result1[key], 'desc');
+	      if (result1.size > 250) {
+	      	result1 = result1.slice(0,250);
+	      }
+	      cache.set(artist1, result1);
+
+	      request.get({
+			url: 'http://localhost:3000/api/artistsearch',
+			qs: {
+			  artist: artist2
+			}
+
+			}, (err2, response2, body2) => {
+			  if (err)
+		        return response.status(500).send('ERROR');
+
+		      var result2 = JSON.parse(body2);
+		      result2 = _.orderBy(_.keys(result2),key => result2[key], 'desc');
+		      if (result2.size > 250) {
+		      	result2 = result2.slice(0,250);
+		      }
+		      cache.set(artist2, result2);
+
+		      words = _.union(result2, result1);
+			  if (words.size > 250) {
+			  	words = words.slice(0,250);
+			  }
+			  words = words.join();
+
+	      res.render('wordcloud', { get: {artist1: artist1, artist2: artist2, list: words}});
+	      //res.type('json');
+	      //res.send(result)
+		});
+	  });
+	}
+	
+})
 
 app.get('/wordsearch/:word/:artist', (req, res) => {
 	var word = req.params.word;
@@ -81,46 +240,65 @@ app.get('/wordsearch/:word/:artist', (req, res) => {
 
 		  var result = JSON.parse(body);
 		  var songs = _.toPairs(result);
-
 		  async.map(songs, function(song, iAmDone) {
 		  	var [songTitle, songId] = song;
-  			request.get({
-  				url:'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
-    			qs: {
-     				apikey: '101ee0383f1dc5b5665ba357d7a00514',
-  					track_id: songId
-  				}
-
-  			}, function(err2, res2, body2) {
-    			if (err2)
-     			 iAmDone(err2);
-
-     			var wordCount = 0;
-     			var lyricResult = JSON.parse(body2);
-     			var lyrics = lyricResult.message.body.lyrics.lyrics_body;
+		  	var wordCount = 0;
+		  	if (songMap.has(songTitle) && songMap.get(songTitle)[0] === songId) {
+		  		var lyrics = songMap.get(songTitle)[1];
      			var wordArray = lyrics.split(/[^a-zA-Z']/);
      			for (var x of wordArray) {
-     				if (x === word) {
+     				if (x.toLowerCase() === word.toLowerCase()) {
      					++wordCount;
      				}
      			}
+		  		iAmDone(null,[songTitle, wordCount])
+		  	}
+		  	else {
+	  			request.get({
+	  				url:'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
+	    			qs: {
+	     				apikey: 'a872c0cf5b5ae365e0406f59a49c6e6a',
+	  					track_id: songId
+	  				}
 
-    			iAmDone(null, [songTitle, wordCount]);
- 			});
-			}, function(err3, result3) {
-  			if (err3) {
-   			 // if one of the request.get calls failed...
- 			 }
- 			 result3 = _.fromPairs(result3);
- 			 res.type('json')
- 			 res.send(result3); // result is an array of all the COUNTs in iAmDone(null, COUNT);
-		  });
-		  //res.type('json');
-		  //res.send(result); 
-		  //res.render('word');
-		})
+	  			}, function(err2, res2, body2) {
+	    			if (err2)
+	     			 iAmDone(err2);
+
+	     			var lyricResult = JSON.parse(body2);
+	     			var lyrics = lyricResult.message.body.lyrics.lyrics_body;
+	     			songMap.set(songTitle, [songId, lyrics]);
+	     			var wordArray = lyrics.split(/[^a-zA-Z']/);
+	     			for (var x of wordArray) {
+	     				if (x.toLowerCase() === word.toLowerCase()) {
+	     					++wordCount;
+	     				}
+	     			}
+
+	    			iAmDone(null, [songTitle, wordCount]);
+ 				});
+	  		}
+		}, function(err3, result3) {
+			if (err3) {
+			 // if one of the request.get calls failed...
+			 }
+			 result3 = _.fromPairs(result3);
+			 var freqs = [];
+			 for (var key in result3){
+			 	freqs.push(result3[key]);
+			 }
+		 result3 = _.orderBy(_.keys(result),key => result[key], 'desc');
+			 result3 = result3.join();
+			 freqs.sort(function(a,b) {return b-a});
+			 freqs = freqs.join();
+			 res.render('word', { get: {word: word, songs: result3, freqs: freqs, artist: artist}}); 
+	  //res.type('json');
+	  //res.send(result); 
+	  //res.render('word');
+	})
 	}
-);
+  );
+});
 
 app.get('/wordsearch/:word/:artist/:artist2', (req,res) => {
 	var word = req.params.word;
@@ -138,52 +316,71 @@ app.get('/wordsearch/:word/:artist/:artist2', (req,res) => {
 
 		  var result = JSON.parse(body);
 		  var songs = _.toPairs(result);
-
 		  async.map(songs, function(song, iAmDone) {
 		  	var [songTitle, songId] = song;
-  			request.get({
-  				url:'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
-    			qs: {
-      				apikey: '101ee0383f1dc5b5665ba357d7a00514',
-  					track_id: songId
-  				}
-
-  			}, function(err2, res2, body2) {
-    			if (err2)
-     			 iAmDone(err2);
-
-     			var wordCount = 0;
-     			var lyricResult = JSON.parse(body2);
-     			var lyrics = lyricResult.message.body.lyrics.lyrics_body;
+		  	var wordCount = 0;
+		  	if (songMap.has(songTitle) && songMap.get(songTitle)[0] === songId) {
+		  		var lyrics = songMap.get(songTitle)[1];
      			var wordArray = lyrics.split(/[^a-zA-Z']/);
      			for (var x of wordArray) {
-     				if (x === word) {
+     				if (x.toLowerCase() === word.toLowerCase()) {
      					++wordCount;
      				}
      			}
+		  		iAmDone(null,[songTitle, wordCount])
+		  	}
+		  	else {
+	  			request.get({
+	  				url:'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
+	    			qs: {
+	     				apikey: 'a872c0cf5b5ae365e0406f59a49c6e6a',
+	  					track_id: songId
+	  				}
 
-    			iAmDone(null, [songTitle, wordCount]);
- 			});
-			}, function(err3, result3) {
-  			if (err3) {
-   			 // if one of the request.get calls failed...
- 			 }
- 			 result3 = _.fromPairs(result3);
- 			 res.type('json')
- 			 res.send(result3); // result is an array of all the COUNTs in iAmDone(null, COUNT);
-		  });
-		  //res.type('json');
-		  //res.send(result); 
-		  //res.render('word');
-		})
+	  			}, function(err2, res2, body2) {
+	    			if (err2)
+	     			 iAmDone(err2);
+
+	     			var lyricResult = JSON.parse(body2);
+	     			var lyrics = lyricResult.message.body.lyrics.lyrics_body;
+	     			songMap.set(songTitle, [songId, lyrics]);
+	     			var wordArray = lyrics.split(/[^a-zA-Z']/);
+	     			for (var x of wordArray) {
+	     				if (x.toLowerCase() === word.toLowerCase()) {
+	     					++wordCount;
+	     				}
+	     			}
+
+	    			iAmDone(null, [songTitle, wordCount]);
+ 				});
+	  		}
+		}, function(err3, result3) {
+			if (err3) {
+			 // if one of the request.get calls failed...
+			 }
+			 result3 = _.fromPairs(result3);
+			 var freqs = [];
+			 for (var key in result3){
+			 	freqs.push(result3[key]);
+			 }
+		 result3 = _.orderBy(_.keys(result),key => result[key], 'desc');
+			 result3 = result3.join();
+			 freqs.sort(function(a,b) {return b-a});
+			 freqs = freqs.join();
+			 res.render('word', { get: {word: word, songs: result3, freqs: freqs, artist: artist}}); 
+	  //res.type('json');
+	  //res.send(result); 
+	  //res.render('word');
+	})
 	}
-);
+  );
+});
 
 app.get('/api/artistsearch', (req, res) => {
   request.get({
     url: 'http://api.musixmatch.com/ws/1.1/artist.search',
     qs: {
-      apikey: '101ee0383f1dc5b5665ba357d7a00514',
+      apikey: 'a872c0cf5b5ae365e0406f59a49c6e6a',
       q_artist: req.query.artist,
       page_size: 2
     }
@@ -194,7 +391,7 @@ app.get('/api/artistsearch', (req, res) => {
 
       const artistResults = JSON.parse(body); 
       request.get({
-      	url:'http://localhost:3000/api/albumget',
+      	url:'http://localhost:3000/api/trackget',
       	qs: {
       		artist_id: artistResults.message.body.artist_list[0].artist.artist_id,
       	}
@@ -212,90 +409,105 @@ app.get('/api/artistsearch', (req, res) => {
   );
 });
 
-
-app.get('/api/albumget', (req, res) => {
-	request.get ({
-		url: 'http://api.musixmatch.com/ws/1.1/artist.albums.get',
-		qs: {
-			apikey: '101ee0383f1dc5b5665ba357d7a00514',
-			artist_id: req.query.artist_id,
+app.get('/api/trackget', (req, res) => {
+	request.get({
+		url:'http://api.musixmatch.com/ws/1.1/track.search',
+		qs:{
+			apikey: 'a872c0cf5b5ae365e0406f59a49c6e6a',
+			f_artist_id: req.query.artist_id,
 			page_size: 6,
-			g_album_name: 1
-
+			s_track_rating: "desc"
 		}
+	}, (err, response, body) => {
+		if (err)
+			return response.status(500).send('ERROR');
 
-		}, (err, response, body) => {
-			if (err)
-				return response.status(500).send('ERROR');
+		var result = JSON.parse(body);
+		var track_names = _.map(result.message.body.track_list, 'track.track_name');
+		var track_ids = _.map(result.message.body.track_list, 'track.track_id');
+ 		var tracks = _.fromPairs(_.unzip([track_names, track_ids]));
+ 		tracks = _.toPairs(tracks);
 
-			const albumResults = JSON.parse(body);
-
-			var album_ids = _.map(albumResults.message.body.album_list, 'album.album_id');
-
+		async.map(tracks, function(track, iAmDone) {
+			for (key in track) {
+				var trackName = key;
+				var trackId = track[key];
+			}
 			var myMap = new Map();
-			for (x in album_ids) {
-				request.get ({
-					url: 'http://api.musixmatch.com/ws/1.1/album.tracks.get',
-					qs: {
-						apikey: '101ee0383f1dc5b5665ba357d7a00514',
-						album_id: album_ids[x],
-						page_size: 3,
-						f_has_lyrics: 1
-					}
-
-					}, (err2, response2, body2) => {
-						if (err2)
-							return response2.status(500).send('ERROR');
-
-						const trackResults = JSON.parse(body2);
-
-						var track_ids = _.map(trackResults.message.body.track_list, 'track.track_id');
-						for (y in track_ids){
-							request.get ( {
-								url: 'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
-								qs: {
-									apikey:'101ee0383f1dc5b5665ba357d7a00514',
-									track_id: track_ids[y]
-								}
-
-								}, (err3, response3, body3) => {
-									if (err3)
-										return response3.status(500).send('ERROR');
-
-									const lyricResults = JSON.parse(body3);
-
-									var lyrics = lyricResults.message.body.lyrics.lyrics_body;
-									var wordArray = lyrics.split(/[^a-zA-Z']/);
-									for (i = 0; i < wordArray.length; i++) {
-										if (wordArray[i] !== "") {
-											word = wordArray[i].toLowerCase()
-											if (myMap.has(word)) {
-												myMap.set(word, myMap.get(word)+1);
-											} 
-											else {
-												myMap.set(word, 1);
-											}
-										}
-									}
-								}
-							)
+			if (songMap.has(trackName) && songMap.get(trackName)[0] === trackId) {
+				lyrics = songMap.get(trackName)[1];
+				var wordArray = lyrics.split(/[^a-zA-Z']/);
+				for (i = 0; i < wordArray.length; i++) {
+					if (wordArray[i] !== "") {
+						word = wordArray[i].toLowerCase().replace(/'/g, "");
+						if (stopWords.indexOf(word) < 0){
+							if (myMap.has(word)) {
+								myMap.set(word, myMap.get(word)+1);
+							} 
+							else {
+								myMap.set(word, 1);
+							}
 						}
 					}
-				)
-			}
-			setTimeout(function() {
-				var obj = Object.create(null);
-				for ([k,v] of myMap){
-					obj[k] = v;
 				}
-				console.log("fuck" + obj['what'])
-				res.type('json');
-				obj = JSON.stringify(obj);
-				res.send(obj);
-			}, 500);
-		}	
-	)
-});
+				iAmDone(null, myMap);
+			}
+			else {
+				request.get({
+					url: 'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
+					qs: {
+						apikey: 'a872c0cf5b5ae365e0406f59a49c6e6a',
+						track_id: trackId
+					}
+				}, function(err2, response2, body2) {
+					if (err2)
+						iAmDone(err2)
+					var lyricResult = JSON.parse(body2);
+	     			var lyrics = lyricResult.message.body.lyrics.lyrics_body;
+	     			songMap.set(trackName, [trackId, lyrics]);
+					var wordArray = lyrics.split(/[^a-zA-Z']/);
+					for (i = 0; i < wordArray.length; i++) {
+						if (wordArray[i] !== "") {
+							word = wordArray[i].toLowerCase().replace(/'/g, "");
+							if (stopWords.indexOf(word) < 0){
+								if (myMap.has(word)) {
+									myMap.set(word, myMap.get(word)+1);
+								} 
+								else {
+									myMap.set(word, 1);
+								}
+							}
+						}
+					}
+					iAmDone(null, myMap);
+				})
+			}
+		}, function (err3, result3) {
+			if (err3) {
+
+			}
+			var mergeMap = new Map();
+			for (var y = 0; y < result3.length; y++) {
+				var map = result3[y];
+				for (var word of map.keys()) {
+					if (mergeMap.has(word)) {
+						mergeMap.set(word, mergeMap.get(word) + map.get(word));
+					}
+					else {
+						mergeMap.set(word, map.get(word));
+					}
+				}
+			}
+			var obj = Object.create(null);
+			for ([k,v] of mergeMap) {
+				obj[k] = v;
+			}
+			res.type('json')
+			res.send(JSON.stringify(obj));
+		})
+	})
+})
+
 
 //word
 app.get('/api/wordsearch', (req, res) => {
@@ -305,7 +517,7 @@ app.get('/api/wordsearch', (req, res) => {
 	  request.get({
 	    url: 'http://api.musixmatch.com/ws/1.1/track.search',
 	    qs: {
-	      apikey: '101ee0383f1dc5b5665ba357d7a00514',
+	      apikey: 'a872c0cf5b5ae365e0406f59a49c6e6a',
 	      q_lyrics: req.query.word,
 	      q_artist: artist,
 	      f_has_lyrics: 1,
@@ -330,7 +542,7 @@ app.get('/api/wordsearch', (req, res) => {
 	  request.get({
 	    url: 'http://api.musixmatch.com/ws/1.1/track.search',
 	    qs: {
-	      apikey: '101ee0383f1dc5b5665ba357d7a00514',
+	      apikey: 'a872c0cf5b5ae365e0406f59a49c6e6a',
 	      q_lyrics: req.query.word,
 	      q_artist: artist,
      	  f_has_lyrics: 1,
@@ -349,7 +561,7 @@ app.get('/api/wordsearch', (req, res) => {
 	      request.get ({
 	      	url: 'http://api.musixmatch.com/ws/1.1/track.search',
 	    	qs: {
-	     	  apikey: '101ee0383f1dc5b5665ba357d7a00514',
+	     	  apikey: 'a872c0cf5b5ae365e0406f59a49c6e6a',
 	     	  q_lyrics: req.query.word,
 	     	  q_artist: artist2,
 	     	  f_has_lyrics: 1,
@@ -377,31 +589,13 @@ app.get('/api/wordsearch', (req, res) => {
   };
 });
 
-
-//test
-app.get('/api/tracksearch', (req, res) => {
-  request.get({
-    url: 'http://api.musixmatch.com/ws/1.1/chart.artists.get',
-    qs: {
-      apikey: '101ee0383f1dc5b5665ba357d7a00514',
-      page: 1,
-      page_size: 3,
-      country: req.query.country
-    }
-
-    }, (err, response, body) => {
-      if (err)
-        return response.status(500).send('ERROR'); 
-
-      const searchResults = JSON.parse(body); 
-      var artists = _.map(searchResults.message.body.artist_list, 'artist.artist_name');
-      var results = {result: artists};
-
-      res.type('json');
-      res.send(JSON.stringify(results));
-    }
-  );
-});
+app.get('/song/:artist/:track/:word', (req, res) => {
+	var song = req.params.track;
+	var artist = req.params.artist;
+	var word = req.params.word;
+	var lyrics = songMap.get(song)[1];
+	res.render('lyrics', {get: {song: song, lyrics: lyrics, artist: artist, word: word}});
+})
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));

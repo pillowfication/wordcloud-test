@@ -8,10 +8,6 @@ h1{
 
 }
 
-#canvas {
-  width: 800px;
-  height: 600px;
-}
 
 .main {
   margin: auto;
@@ -19,10 +15,38 @@ h1{
   min-width: 600px;
 }
 
+#box {
+  pointer-events: none;
+  position: absolute;
+  box-shadow: 0 0 200px rgba(255,255,255,0.5);
+  border-radius: 50px;
+  cursor:pointer;
+}
+
+
+
+#canvas-container {
+  overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.canvas {
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas.hide {
+  display: none;
+}
+
 #searchBar {
     border-color: #a407ff;
     font-size: 20px;
-    font: lightgrey;
+    color: lightgrey;
     height: 40px;
     width:85%;
     border-width: 2px;
@@ -37,7 +61,7 @@ h1{
     background: #a407ff;
     border-color:#a407ff;
     border-radius:5px;
-    width: 100x;
+    width: 100px;
     height: 41px;
 
 }
@@ -61,16 +85,14 @@ h1{
 #searchBar2 {
     border-color: purple;
     font-size: 25px;
-    font: lightgrey;
+    color: lightgrey;
     height: 40px;
     width: 400px;
     border-width: 2px;
-    magrin:500px 0 50px 0 ;
 }
 
 
 #wordcloudImage{
-   margin-top: 50px;
    margin-left: 200px;
 
 }
@@ -85,16 +107,6 @@ h1{
     height: 40px;
 }
 
-#facebookButton{
-  font-size: 20px;
-  font-style: italic;
-  color:white;
-  margin-top: 10px;
-  background: blue;
-  border-color: blue;
-  width: 210px;
-  height: 40px;
-}
 .cloudSearchArea{
 
   margin-left: 200px;
@@ -106,27 +118,25 @@ h1{
 #theWord{
   width: 200px;
   font-size: 40px;
-  margin: 0 0 0 850px;
+  margin: 0 0 0 500px;
+  text-align: center;
 }
 
 #songList{
+  text-align: center;
   width: 200px;
   font-size: 30px;
-  margin-left: 780px;
+  margin-left: 500px;
   margin-top: 50px;
 
 }
-#frequencyList{
-  width: 200px;
-  font-size: 30px;
-  margin-left: 1000px;
-  margin-top: -440px;
-}
-#backtoMain{
-  margin-left: -200px;
-  margin-top: 100px;
+
+#backtoCloud{
+  margin-left: 500px;
   background-color: purple;
+  color: white;
   width: 300px;
   height: 50px;
   font-size: 40px;
 }
+
