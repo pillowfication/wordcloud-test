@@ -1,4 +1,5 @@
 var request = require('request');
+var async = require('async')
 var _ = require('lodash')
 var bodyParser = require('body-parser')
 
@@ -52,26 +53,121 @@ app.get('/wordcloud/:artist', (req, res) => {
       var result = JSON.parse(body);
       result = _.orderBy(_.keys(result),key => result[key], 'desc');
       console.log(_.size(result));
+      var send = {result: result};
 
-      //res.render('wordcloud', { get: {artist_name: artist_name}});
-      res.type('json');
-      res.send(result)
+      res.render('wordcloud', { get: {artist_name: artist_name}});
+      //res.type('json');
+      //res.send(send)
 	})
 });
 
-app.get('/wordsearch/:word', (req, res) => {
+app.get('/wordsearch/:word/:artist', (req, res) => {
 	var word = req.params.word;
+	var artist = req.params.artist;
 	request.get ({
 		url:'http://localhost:3000/api/wordsearch',
 		qs: {
+			q_artist: artist,
 			word: word
 		}
 
 		}, (err, response, body) => {
 
 		  var result = JSON.parse(body);
-		  res.type('json');
-		  res.send(result); 
+		  var songs = _.toPairs(result);
+
+		  async.map(songs, function(song, iAmDone) {
+		  	var [songTitle, songId] = song;
+  			request.get({
+  				url:'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
+    			qs: {
+     				apikey: '101ee0383f1dc5b5665ba357d7a00514',
+  					track_id: songId
+  				}
+
+  			}, function(err2, res2, body2) {
+    			if (err2)
+     			 iAmDone(err2);
+
+     			var wordCount = 0;
+     			var lyricResult = JSON.parse(body2);
+     			var lyrics = lyricResult.message.body.lyrics.lyrics_body;
+     			var wordArray = lyrics.split(/[^a-zA-Z']/);
+     			for (var x of wordArray) {
+     				if (x === word) {
+     					++wordCount;
+     				}
+     			}
+
+    			iAmDone(null, [songTitle, wordCount]);
+ 			});
+			}, function(err3, result3) {
+  			if (err3) {
+   			 // if one of the request.get calls failed...
+ 			 }
+ 			 result3 = _.fromPairs(result3);
+ 			 res.type('json')
+ 			 res.send(result3); // result is an array of all the COUNTs in iAmDone(null, COUNT);
+		  });
+		  //res.type('json');
+		  //res.send(result); 
+		  //res.render('word');
+		})
+	}
+);
+
+app.get('/wordsearch/:word/:artist/:artist2', (req,res) => {
+	var word = req.params.word;
+	var artist = req.params.artist;
+	var artist2 = req.params.artist2;
+	request.get ({
+		url:'http://localhost:3000/api/wordsearch',
+		qs: {
+			q_artist: artist,
+			q_artist2: artist2,
+			word: word
+		}
+
+		}, (err, response, body) => {
+
+		  var result = JSON.parse(body);
+		  var songs = _.toPairs(result);
+
+		  async.map(songs, function(song, iAmDone) {
+		  	var [songTitle, songId] = song;
+  			request.get({
+  				url:'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
+    			qs: {
+      				apikey: '101ee0383f1dc5b5665ba357d7a00514',
+  					track_id: songId
+  				}
+
+  			}, function(err2, res2, body2) {
+    			if (err2)
+     			 iAmDone(err2);
+
+     			var wordCount = 0;
+     			var lyricResult = JSON.parse(body2);
+     			var lyrics = lyricResult.message.body.lyrics.lyrics_body;
+     			var wordArray = lyrics.split(/[^a-zA-Z']/);
+     			for (var x of wordArray) {
+     				if (x === word) {
+     					++wordCount;
+     				}
+     			}
+
+    			iAmDone(null, [songTitle, wordCount]);
+ 			});
+			}, function(err3, result3) {
+  			if (err3) {
+   			 // if one of the request.get calls failed...
+ 			 }
+ 			 result3 = _.fromPairs(result3);
+ 			 res.type('json')
+ 			 res.send(result3); // result is an array of all the COUNTs in iAmDone(null, COUNT);
+		  });
+		  //res.type('json');
+		  //res.send(result); 
 		  //res.render('word');
 		})
 	}
@@ -153,7 +249,7 @@ app.get('/api/albumget', (req, res) => {
 								url: 'http://api.musixmatch.com/ws/1.1/track.lyrics.get',
 								qs: {
 									apikey:'101ee0383f1dc5b5665ba357d7a00514',
-									track_id: track_ids[y],
+									track_id: track_ids[y]
 								}
 
 								}, (err3, response3, body3) => {
@@ -197,23 +293,82 @@ app.get('/api/albumget', (req, res) => {
 
 //word
 app.get('/api/wordsearch', (req, res) => {
-  request.get({
-    url: 'http://api.musixmatch.com/ws/1.1/track.search',
-    qs: {
-      apikey: '101ee0383f1dc5b5665ba357d7a00514',
-      q_lyrics: req.query.word,
-      page_size: 5
-    }
+  var artist = req.query.q_artist
+  var artist2 = req.query.q_artist2
+  if (!artist2) {
+	  request.get({
+	    url: 'http://api.musixmatch.com/ws/1.1/track.search',
+	    qs: {
+	      apikey: '101ee0383f1dc5b5665ba357d7a00514',
+	      q_lyrics: req.query.word,
+	      q_artist: artist,
+	      f_has_lyrics: 1,
+	      page_size: 5
+	    }
 
-    }, (err, response, body) => {
-      if (err)
-        return response.status(500).send('ERROR'); 
+	    }, (err, response, body) => {
+	      if (err)
+	        return response.status(500).send('ERROR'); 
 
-      const searchResults = JSON.parse(body);      
-      res.type('json');
-      res.send(JSON.stringify(searchResults));
-    }
-  );
+	      var songResults = JSON.parse(body);    
+	      var track_names = _.map(songResults.message.body.track_list, 'track.track_name');	      
+	      var track_ids = _.map(songResults.message.body.track_list, 'track.track_id');
+ 		  var track = _.fromPairs(_.unzip([track_names, track_ids]));
+  
+	      res.type('json');
+	      res.send(JSON.stringify(track));
+	    }
+	  );
+  }
+  else {
+	  request.get({
+	    url: 'http://api.musixmatch.com/ws/1.1/track.search',
+	    qs: {
+	      apikey: '101ee0383f1dc5b5665ba357d7a00514',
+	      q_lyrics: req.query.word,
+	      q_artist: artist,
+     	  f_has_lyrics: 1,
+	      page_size: 3
+	    }
+
+	    }, (err, response, body) => {
+	      if (err)
+	        return response.status(500).send('ERROR'); 
+
+	      var songResults1 = JSON.parse(body);
+	      var track_ids1 = _.map(songResults1.message.body.track_list, 'track.track_id');
+	      var track_names1 = _.map(songResults1.message.body.track_list, 'track.track_name');
+
+
+	      request.get ({
+	      	url: 'http://api.musixmatch.com/ws/1.1/track.search',
+	    	qs: {
+	     	  apikey: '101ee0383f1dc5b5665ba357d7a00514',
+	     	  q_lyrics: req.query.word,
+	     	  q_artist: artist2,
+	     	  f_has_lyrics: 1,
+	      	  page_size: 2
+	 	    }	
+
+	  	  }, (err2, response2, body2) => {
+	  	    if (err2)
+	       	  return response2.status(500).send('ERROR'); 
+
+	    	var songResults2 = JSON.parse(body2);
+	        var track_ids2 = _.map(songResults2.message.body.track_list, 'track.track_id');
+	        var track_names2 = _.map(songResults2.message.body.track_list, 'track.track_name');
+
+	        var track_ids = track_ids1.concat(track_ids2);
+	        var track_names = track_names1.concat(track_names2);
+
+ 		    var track = _.fromPairs(_.unzip([track_names, track_ids]));
+	    	res.type('json');
+	    	res.send(JSON.stringify(track));
+	  	}	
+
+	);
+	});
+  };
 });
 
 
