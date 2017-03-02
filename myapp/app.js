@@ -38,23 +38,44 @@ app.get('/styles.css', (req, res) => {
 });
 
 app.get('/wordcloud/:artist', (req, res) => {
+  var artist_name = req.params.artist;
   request.get({
 	url: 'http://localhost:3000/api/artistsearch',
 	qs: {
-	  artist: req.params.artist
+	  artist: artist_name
 	}
 
 	}, (err, response, body) => {
 	  if (err)
         return response.status(500).send('ERROR');
 
-      var result = JSON.parse(body)
-      result = _.orderBy(_.keys(result),key => result[key], 'desc')
+      var result = JSON.parse(body);
+      result = _.orderBy(_.keys(result),key => result[key], 'desc');
       console.log(_.size(result));
-      res.type('json')
-      res.send(result);
+
+      res.render('wordcloud', { get: {artist_name: artist_name}});
+      //res.type('json');
+      //res.send(result)
 	})
 });
+
+app.get('/wordsearch/:word', (req, res) => {
+	var word = req.params.word;
+	request.get ({
+		url:'http://localhost:3000/api/wordsearch',
+		qs: {
+			word: word
+		}
+
+		}, (err, response, body) => {
+
+		  var result = JSON.parse(body);
+		  res.type('json');
+		  res.send(result); 
+		  //res.render('word');
+		})
+	}
+);
 
 app.get('/api/artistsearch', (req, res) => {
   request.get({
@@ -73,7 +94,7 @@ app.get('/api/artistsearch', (req, res) => {
       request.get({
       	url:'http://localhost:3000/api/albumget',
       	qs: {
-      		artist_id: artistResults.message.body.artist_list[0].artist.artist_id
+      		artist_id: artistResults.message.body.artist_list[0].artist.artist_id,
       	}
       }, (err2, response2, body2) => {
   	  	if (err2)
@@ -82,7 +103,7 @@ app.get('/api/artistsearch', (req, res) => {
   	  	
   	  	var result = JSON.parse(body2);
   	  	res.type('json');
-  	  	res.send(result)
+  	  	res.send(result);
   	  })
 
     }
@@ -142,7 +163,7 @@ app.get('/api/albumget', (req, res) => {
 									const lyricResults = JSON.parse(body3);
 
 									var lyrics = lyricResults.message.body.lyrics.lyrics_body;
-									var wordArray = lyrics.split(/[^a-zA-Z0-9']/);
+									var wordArray = lyrics.split(/[^a-zA-Z']/);
 									for (i = 0; i < wordArray.length; i++) {
 										if (wordArray[i] !== "") {
 											word = wordArray[i].toLowerCase()
@@ -163,10 +184,9 @@ app.get('/api/albumget', (req, res) => {
 			setTimeout(function() {
 				var obj = Object.create(null);
 				for ([k,v] of myMap){
-					var key = k.replace(/\\n/g, "\\n").replace(/\\r/g, "\\r")
-					obj[key] = v;
+					obj[k] = v;
 				}
-				console.log("fuck" + myMap.get('what'))
+				console.log("fuck" + obj['what'])
 				res.type('json');
 				obj = JSON.stringify(obj);
 				res.send(obj);
@@ -182,7 +202,6 @@ app.get('/api/wordsearch', (req, res) => {
     qs: {
       apikey: '101ee0383f1dc5b5665ba357d7a00514',
       q_lyrics: req.query.word,
-      f_has_lyrics: true,
       page_size: 5
     }
 
