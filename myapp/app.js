@@ -81,6 +81,7 @@ app.get('/wordcloud/:artist', (req, res) => {
 		}
 
 		}, (err, response, body) => {
+
 		  if (err)
 	        return response.status(500).send('ERROR');
 
