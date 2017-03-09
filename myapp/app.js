@@ -45,23 +45,27 @@ var stopWords= ['a','about','am','an','and','any','are','arent',
 var songMap = new Map();
 var cache = new Map();
 
+/* istanbul ignore next */
 app.get('/', function(req,res) {
 	res.render('index')
 })
 
+/* istanbul ignore next */
 app.get('/styles.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'styles', 'main.css'));
 });
 
+/* istanbul ignore next */
 app.get('/lyrics.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'styles', 'lyrics.css'));
 });
 
-
+/* istanbul ignore next */
 app.get('/wordcloud2.js', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'node_modules', 'wordcloud', 'src',  'wordcloud2.js'));
 });
 
+/* istanbul ignore next */
 app.get('/wordcloudpage.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'scripts', 'wordcloudpage.js'));
 });
