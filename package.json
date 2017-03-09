@@ -24,11 +24,13 @@
     "wordcloud": "^1.0.6"
   },
   "scripts": {
-    "test": "rocha test/app-test.js"
+    "test": "rocha test/app-test.js",
+    "coverage": "istanbul cover rocha test/app-test.js"
   },
   "license": "MIT",
   "devDependencies": {
     "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
     "rocha": "^2.3.0"
   }
