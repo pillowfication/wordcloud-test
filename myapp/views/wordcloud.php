@@ -5,8 +5,8 @@
     <meta charset="utf-8">
     <title>Lyrics Cloud</title>
     <link href="/styles.css" rel="stylesheet">
-    <script src="../../node_modules/wordcloud/src/wordcloud2.js"> </script>
-    <script src="scripts/wordcloudpage.js"> </script>
+    <script src="/wordcloud2.js"> </script>
+    <script src="/wordcloudpage.js"> </script>
 </head>
 
 <body>
