@@ -1,0 +1,22 @@
+[
+  {
+    "title": "",
+    "tests": []
+  },
+  {
+    "title": "Searching for Artist",
+    "tests": []
+  },
+  {
+    "title": "Searching for Artist Null Input",
+    "tests": [
+      "Should return 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Searching for Artist Artist Not Found",
+    "tests": [
+      "Should return 404 Page Not Found"
+    ]
+  }
+]

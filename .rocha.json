@@ -1,0 +1,158 @@
+[
+  {
+    "title": "",
+    "tests": []
+  },
+  {
+    "title": "Searching for Artist",
+    "tests": []
+  },
+  {
+    "title": "Searching for Artist Null Input",
+    "tests": [
+      "Returns 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Searching for Artist Bad Input",
+    "tests": [
+      "Returns 500 Internal Server Error/Artist Not Found"
+    ]
+  },
+  {
+    "title": "Searching for Artist Good Input",
+    "tests": [
+      "Does not return undefined response",
+      "Does not return 500 Artist Not Found",
+      "Does not return 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Merging An Artist",
+    "tests": []
+  },
+  {
+    "title": "Merging An Artist Null Input",
+    "tests": [
+      "Returns 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Merging An Artist Bad Input",
+    "tests": [
+      "Returns 500 Internal Server Error/Artist Not Found"
+    ]
+  },
+  {
+    "title": "Merging An Artist Good Input 1",
+    "tests": [
+      "Does not return 404 Page Not Found",
+      "Does not return undefined response",
+      "Does not return 500 Artist Not Found"
+    ]
+  },
+  {
+    "title": "Merging An Artist Good Input 2",
+    "tests": [
+      "Does not return undefined response",
+      "Does not return 404 Page Not Found",
+      "Does not return 500 Artist Not Found"
+    ]
+  },
+  {
+    "title": "Song List with One Artist",
+    "tests": []
+  },
+  {
+    "title": "Song List with One Artist Both the Word and the Artist are undefined",
+    "tests": [
+      "Returns 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Song List with One Artist Artist is undefined",
+    "tests": [
+      "Returns 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Song List with One Artist Word Bad Input",
+    "tests": [
+      "Returns 500 Internal Server Error/Artist Not Found"
+    ]
+  },
+  {
+    "title": "Song List with One Artist Artist Bad Input",
+    "tests": [
+      "Returns 500 Internal Server Error/Artist Not Found"
+    ]
+  },
+  {
+    "title": "Song List with One Artist Good Input",
+    "tests": [
+      "Does not return 500 Artist Not Found",
+      "Does not return 404 Page Not Found",
+      "Does not return undefined response"
+    ]
+  },
+  {
+    "title": "Song List with Two Artists",
+    "tests": []
+  },
+  {
+    "title": "Song List with Two Artists Artist 1 Bad Input",
+    "tests": [
+      "Returns 500 Internal Server Error/Artist Not Found"
+    ]
+  },
+  {
+    "title": "Song List with Two Artists Artist 2 Bad Input",
+    "tests": [
+      "Returns 500 Internal Server Error/Artist Not Found"
+    ]
+  },
+  {
+    "title": "Song List with Two Artists Good Input",
+    "tests": [
+      "Does not return 500 Artist Not Found",
+      "Does not return 404 Page Not Found",
+      "Does not return undefined response"
+    ]
+  },
+  {
+    "title": "Lyrics Page",
+    "tests": []
+  },
+  {
+    "title": "Lyrics Page Artist, Song, and Word are undefined",
+    "tests": [
+      "Returns 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Lyrics Page Song and Word are undefined",
+    "tests": [
+      "Returns 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Lyrics Page Word is undefined",
+    "tests": [
+      "Returns 404 Page Not Found"
+    ]
+  },
+  {
+    "title": "Lyrics Page Song Bad Input",
+    "tests": [
+      "Returns 500 Internal Server Error/Artist Not Found"
+    ]
+  },
+  {
+    "title": "Lyrics Page Good Input",
+    "tests": [
+      "Does not return undefined response",
+      "Does not return 404 Page Not Found",
+      "Does not return 500 Artist Not Found"
+    ]
+  }
+]
